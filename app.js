@@ -26,7 +26,7 @@ const userRouter=require("./routes/user.js");
 
 
 // const MONGO_URL="mongodb://127.0.0.1:27017/wanderlust";
-const dbUrl=process.env.ATLASdB_URL;
+const MONGO_URL=process.env.ATLASDB_URL;
 main().then(()=>{
     console.log("connected to DB");
 })
@@ -34,7 +34,7 @@ main().then(()=>{
     console.log(err);
 });
 async function main() {
-  await mongoose.connect(dbUrl);
+  await mongoose.connect(MONGO_URL);
 
 }
 
@@ -45,19 +45,21 @@ app.use(express.static(path.join(__dirname,"/public")));
 app.use(methodOverride("_method"));
 app.engine('ejs',ejsMate);
 
+const SECRET = process.env.SECRET || "thisshouldbeabettersecret";
+
 const store=MongoStore.create({
-    mongoUrl: dbUrl,
+    mongoUrl: MONGO_URL,
     crypto: {
-        secret:process.env.SECRET,
+        secret: SECRET,
       },
       touchAfter:24*3600,
   });
- store.on("error",()=>{
-    console.log("Error in Mongo Session store",err);
+ store.on("error",(err)=>{
+    console.log("Error in Mongo Session store", err);
  });
 const sessionOptions={
     store,
-    secret:process.env.SECRET,
+    secret: SECRET,
     resave:false,
     saveUninitialized:true,
     cookie:{
@@ -87,7 +89,7 @@ app.use((req,res,next)=>{
 
    // console.log(res.locals.success);
     next();
-})
+});
 
 
 
@@ -114,7 +116,7 @@ app.all("*",(req,res,next)=>{
 
 app.use((err,req,res,next)=>{
     let{statusCode=500,message="Something went wrong!"}=err;
-    res.render("./listings/error.ejs",{err});
+    res.render("listings/error.ejs",{err});
     //res.status(statusCode).send(message);
 });
 
